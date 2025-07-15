@@ -1,0 +1,560 @@
+import tkinter.ttk
+from tkinter import *
+import time
+
+# Initialize root window
+root = Tk()
+root.title('SeanScript Sorting Visualizer')
+root.geometry('900x750')
+root.config(bg='#2c3e50')
+
+# Custom colors
+DARK_BLUE = '#2c3e50'
+LIGHT_BLUE = '#3498db'
+GREEN = '#2ecc71'
+RED = '#e74c3c'
+YELLOW = '#f1c40f'
+PURPLE = '#9b59b6'
+WHITE = '#ecf0f1'
+GRAY = '#bdc3c7'
+
+# Animation settings
+ANIMATION_SPEED = 0.5  # seconds per operation (increase to slow down)
+BAR_MOVE_STEPS = 20     # steps for smooth movement
+
+# Fonts
+TITLE_FONT = ('Helvetica', 16, 'bold')
+BUTTON_FONT = ('Helvetica', 10, 'bold')
+LABEL_FONT = ('Helvetica', 10)
+STEP_FONT = ('Consolas', 9)
+
+# Global variables
+data = []
+bar_objects = []  # To store canvas bar objects for animation
+current_animation = None  # To track running animation
+
+def drawData(data, colorArray):
+    """Draw the bar graph with smooth animations."""
+    global bar_objects
+    canvas.delete("all")
+    bar_objects = []
+    c_height = 380
+    c_width = 600
+    x_width = c_width / (len(data) + 1)
+    offset = 30
+    spacing = 10
+    normalizeData = [a / max(data) for a in data] if data else []
+    
+    for i, height in enumerate(normalizeData):
+        # Coordinates for each bar
+        x0 = i * x_width + offset + spacing
+        y0 = c_height - height * 340
+        x1 = (i + 1) * x_width + offset
+        y1 = c_height
+
+        # Draw the bar and value
+        bar = canvas.create_rectangle(x0, y0, x1, y1, fill=colorArray[i], outline='')
+        text = canvas.create_text(x0 + (x1-x0)/2, y0 - 15, text=str(data[i]), 
+                                fill=WHITE, font=('Helvetica', 9))
+        bar_objects.append((bar, text))
+
+def animate_swap(i, j):
+    """Animate swapping of two bars with smooth movement."""
+    global bar_objects, data
+    
+    # Get current positions
+    bar_i, text_i = bar_objects[i]
+    bar_j, text_j = bar_objects[j]
+    
+    # Get coordinates
+    x0_i, y0_i, x1_i, y1_i = canvas.coords(bar_i)
+    x0_j, y0_j, x1_j, y1_j = canvas.coords(bar_j)
+    
+    # Calculate movement steps
+    x_diff_i = (x0_j - x0_i) / BAR_MOVE_STEPS
+    x_diff_j = (x0_i - x0_j) / BAR_MOVE_STEPS
+    
+    # Animate movement
+    for step in range(BAR_MOVE_STEPS):
+        # Move bar i
+        canvas.move(bar_i, x_diff_i, 0)
+        canvas.move(text_i, x_diff_i, 0)
+        
+        # Move bar j
+        canvas.move(bar_j, x_diff_j, 0)
+        canvas.move(text_j, x_diff_j, 0)
+        
+        root.update()
+        time.sleep(ANIMATION_SPEED/BAR_MOVE_STEPS)
+    
+    # Update bar_objects after swap
+    bar_objects[i], bar_objects[j] = bar_objects[j], bar_objects[i]
+
+def log_step(message):
+    """Log each step of the sorting process."""
+    steps_text.set(steps_text.get() + "• " + message + "\n")
+    steps_panel.yview_moveto(1)  # Auto-scroll to the bottom
+
+def bubbleSort():
+    """Perform Bubble Sort with visualizations."""
+    global data, current_animation
+    if current_animation:
+        return
+    current_animation = "bubble"
+    if not data: 
+        current_animation = None
+        return
+    
+    steps_text.set("Starting Bubble Sort...\n") 
+    
+    for i in range(len(data) - 1):
+        for j in range(len(data) - i - 1):
+            if data[j] > data[j + 1]:
+                # Visualize comparison
+                drawData(data, [YELLOW if x == j or x == j+1 else LIGHT_BLUE for x in range(len(data))])
+                root.update()
+                time.sleep(ANIMATION_SPEED)
+                
+                # Swap elements
+                data[j], data[j + 1] = data[j + 1], data[j]
+                animate_swap(j, j+1)
+                
+                # Log the step
+                log_step(f"Swapped {data[j]} and {data[j+1]}")
+                
+                # Visualize after swap
+                drawData(data, [GREEN if x == j or x == j+1 else LIGHT_BLUE for x in range(len(data))])
+                root.update()
+                time.sleep(ANIMATION_SPEED)
+            else:
+                # Visualize no swap needed
+                drawData(data, [PURPLE if x == j or x == j+1 else LIGHT_BLUE for x in range(len(data))])
+                root.update()
+                time.sleep(ANIMATION_SPEED/2)
+        
+        # Mark the last sorted element
+        drawData(data, [GREEN if x >= len(data) - i - 1 else LIGHT_BLUE for x in range(len(data))])
+        root.update()
+        time.sleep(ANIMATION_SPEED)
+    
+    # Final visualization
+    drawData(data, [GREEN for _ in range(len(data))])
+    log_step(f"Sorting complete! Final array: {data}")
+    current_animation = None
+
+def selectionSort():
+    """Perform Selection Sort with visualizations."""
+    global data, current_animation
+    if current_animation:
+        return
+    current_animation = "selection"
+    if not data: 
+        current_animation = None
+        return
+    
+    steps_text.set("Starting Selection Sort...\n")
+    
+    for i in range(len(data)):
+        min_idx = i
+        
+        # Visualize current minimum candidate
+        drawData(data, [YELLOW if x == min_idx else LIGHT_BLUE for x in range(len(data))])
+        root.update()
+        time.sleep(ANIMATION_SPEED)
+        
+        for j in range(i + 1, len(data)):
+            # Visualize comparison
+            drawData(data, [PURPLE if x == j else YELLOW if x == min_idx else LIGHT_BLUE for x in range(len(data))])
+            root.update()
+            time.sleep(ANIMATION_SPEED/2)
+            
+            if data[j] < data[min_idx]:
+                min_idx = j
+                # Highlight new minimum
+                drawData(data, [YELLOW if x == min_idx else LIGHT_BLUE for x in range(len(data))])
+                root.update()
+                time.sleep(ANIMATION_SPEED)
+        
+        if i != min_idx:
+            # Visualize before swap
+            drawData(data, [RED if x == i or x == min_idx else LIGHT_BLUE for x in range(len(data))])
+            root.update()
+            time.sleep(ANIMATION_SPEED)
+            
+            # Perform swap
+            data[i], data[min_idx] = data[min_idx], data[i]
+            animate_swap(i, min_idx)
+            log_step(f"Swapped {data[i]} and {data[min_idx]}")
+            
+            # Visualize after swap
+            drawData(data, [GREEN if x == i or x == min_idx else LIGHT_BLUE for x in range(len(data))])
+            root.update()
+            time.sleep(ANIMATION_SPEED)
+        else:
+            # Visualize no swap needed
+            drawData(data, [GREEN if x == i else LIGHT_BLUE for x in range(len(data))])
+            root.update()
+            time.sleep(ANIMATION_SPEED)
+    
+    # Final visualization
+    drawData(data, [GREEN for _ in range(len(data))])
+    log_step(f"Sorting complete! Final array: {data}")
+    current_animation = None
+
+def insertionSort():
+    """Perform Insertion Sort with visualizations."""
+    global data, current_animation
+    if current_animation:
+        return
+    current_animation = "insertion"
+    if not data: 
+        current_animation = None
+        return
+    
+    steps_text.set("Starting Insertion Sort...\n")
+    
+    for i in range(1, len(data)):
+        key = data[i]
+        j = i - 1
+        
+        # Highlight current element being inserted
+        drawData(data, [YELLOW if x == i else LIGHT_BLUE for x in range(len(data))])
+        root.update()
+        time.sleep(ANIMATION_SPEED)
+        
+        log_step(f"Pass {i}: Inserting {key} into correct position")
+        
+        while j >= 0 and key < data[j]:
+            # Visualize shift operation
+            drawData(data, [RED if x == j or x == j+1 else LIGHT_BLUE for x in range(len(data))])
+            root.update()
+            time.sleep(ANIMATION_SPEED/2)
+            
+            data[j + 1] = data[j]
+            
+            # Animate the shift
+            animate_swap(j, j+1)
+            data[j], data[j+1] = data[j+1], data[j]  # Swap back values (since animate_swap changes data)
+            data[j+1] = data[j]  # Actual shift
+            
+            log_step(f"  Shifted {data[j]} to position {j + 1}")
+            
+            # Visualize after shift
+            drawData(data, [YELLOW if x == j else LIGHT_BLUE for x in range(len(data))])
+            root.update()
+            time.sleep(ANIMATION_SPEED)
+            
+            j -= 1
+        
+        data[j + 1] = key
+        log_step(f"  Inserted {key} at position {j + 1}")
+        
+        # Visualize array after insertion
+        drawData(data, [GREEN if x <= i else LIGHT_BLUE for x in range(len(data))])
+        root.update()
+        time.sleep(ANIMATION_SPEED)
+    
+    # Final visualization
+    drawData(data, [GREEN for _ in range(len(data))])
+    log_step(f"Sorting complete! Final array: {data}")
+    current_animation = None
+
+def shellSort():
+    """Perform Shell Sort with visualizations."""
+    global data, current_animation
+    if current_animation:
+        return
+    current_animation = "shell"
+    if not data: 
+        current_animation = None
+        return
+    
+    steps_text.set("Starting Shell Sort...\n")
+    n = len(data)
+    gap = n // 2
+    
+    while gap > 0:
+        log_step(f"Current gap size: {gap}")
+        drawData(data, [PURPLE if x % gap == 0 else LIGHT_BLUE for x in range(len(data))])
+        root.update()
+        time.sleep(ANIMATION_SPEED)
+        
+        for i in range(gap, n):
+            temp = data[i]
+            j = i
+            
+            # Highlight elements being compared
+            drawData(data, [YELLOW if x == j else RED if x == j-gap else PURPLE if x % gap == 0 else LIGHT_BLUE 
+                          for x in range(len(data))])
+            root.update()
+            time.sleep(ANIMATION_SPEED)
+            
+            while j >= gap and data[j - gap] > temp:
+                # Visualize shift operation
+                drawData(data, [RED if x == j or x == j-gap else PURPLE if x % gap == 0 else LIGHT_BLUE 
+                              for x in range(len(data))])
+                root.update()
+                time.sleep(ANIMATION_SPEED/2)
+                
+                data[j] = data[j - gap]
+                log_step(f"  Moved {data[j - gap]} to position {j}")
+                
+                # Animate the shift
+                animate_swap(j, j-gap)
+                data[j], data[j-gap] = data[j-gap], data[j]  # Swap back values
+                data[j] = data[j-gap]  # Actual shift
+                
+                j -= gap
+                
+                # Visualize after shift
+                drawData(data, [YELLOW if x == j else PURPLE if x % gap == 0 else LIGHT_BLUE 
+                              for x in range(len(data))])
+                root.update()
+                time.sleep(ANIMATION_SPEED)
+            
+            data[j] = temp
+            log_step(f"  Inserted {temp} at position {j}")
+            
+            # Visualize array after insertion
+            drawData(data, [GREEN if x <= i and x % gap == j % gap else PURPLE if x % gap == 0 else LIGHT_BLUE 
+                          for x in range(len(data))])
+            root.update()
+            time.sleep(ANIMATION_SPEED)
+        
+        gap //= 2
+    
+    # Final visualization
+    drawData(data, [GREEN for _ in range(len(data))])
+    log_step(f"Sorting complete! Final array: {data}")
+    current_animation = None
+
+def mergeSort():
+    """Perform Merge Sort with visualizations."""
+    global data, current_animation
+    if current_animation:
+        return
+    current_animation = "merge"
+    if not data: 
+        current_animation = None
+        return
+    
+    steps_text.set("Starting Merge Sort...\n")
+    
+    def merge_sort_recursive(start, end):
+        if start < end:
+            mid = (start + end) // 2
+            
+            # Visualize current split
+            drawData(data, [YELLOW if start <= x <= end else LIGHT_BLUE for x in range(len(data))])
+            root.update()
+            time.sleep(ANIMATION_SPEED)
+            
+            log_step(f"Splitting subarray from index {start} to {end}")
+            
+            merge_sort_recursive(start, mid)
+            merge_sort_recursive(mid + 1, end)
+            
+            # Visualize before merge
+            drawData(data, [PURPLE if start <= x <= mid else YELLOW if mid < x <= end else LIGHT_BLUE 
+                          for x in range(len(data))])
+            root.update()
+            time.sleep(ANIMATION_SPEED)
+            
+            merge(data, start, mid, end)
+            
+            # Visualize after merge
+            drawData(data, [GREEN if start <= x <= end else LIGHT_BLUE for x in range(len(data))])
+            root.update()
+            time.sleep(ANIMATION_SPEED)
+    
+    merge_sort_recursive(0, len(data) - 1)
+    
+    # Final visualization
+    drawData(data, [GREEN for _ in range(len(data))])
+    log_step(f"Sorting complete! Final array: {data}")
+    current_animation = None
+
+def merge(data, start, mid, end):
+    left = data[start:mid + 1]
+    right = data[mid + 1:end + 1]
+    i = j = 0
+    k = start
+
+    log_step(f"Merging subarrays: {left} and {right}")
+    
+    while i < len(left) and j < len(right):
+        # Highlight elements being compared
+        drawData(data, [YELLOW if x == start+i else RED if x == mid+1+j 
+                      else GREEN if start <= x < k else LIGHT_BLUE for x in range(len(data))])
+        root.update()
+        time.sleep(ANIMATION_SPEED)
+        
+        if left[i] <= right[j]:
+            data[k] = left[i]
+            log_step(f"  Taking {left[i]} from left subarray")
+            i += 1
+        else:
+            data[k] = right[j]
+            log_step(f"  Taking {right[j]} from right subarray")
+            j += 1
+        
+        # Animate placement
+        if k != start+i-1 and k != mid+1+j-1:
+            # Need to move elements
+            temp = data[k]
+            for x in range(k, start+i if i < len(left) else mid+1+j):
+                data[x] = data[x+1]
+                animate_swap(x, x+1)
+                data[x], data[x+1] = data[x+1], data[x]  # Swap back
+                data[x] = data[x+1]  # Actual shift
+            data[k] = temp
+        
+        k += 1
+        
+        # Visualize after placement
+        drawData(data, [GREEN if start <= x < k else YELLOW if x == start+i else RED if x == mid+1+j 
+                      else LIGHT_BLUE for x in range(len(data))])
+        root.update()
+        time.sleep(ANIMATION_SPEED)
+
+    while i < len(left):
+        data[k] = left[i]
+        log_step(f"  Taking remaining {left[i]} from left subarray")
+        i += 1
+        k += 1
+        
+        # Visualize placement
+        drawData(data, [GREEN if start <= x < k else LIGHT_BLUE for x in range(len(data))])
+        root.update()
+        time.sleep(ANIMATION_SPEED)
+
+    while j < len(right):
+        data[k] = right[j]
+        log_step(f"  Taking remaining {right[j]} from right subarray")
+        j += 1
+        k += 1
+        
+        # Visualize placement
+        drawData(data, [GREEN if start <= x < k else LIGHT_BLUE for x in range(len(data))])
+        root.update()
+        time.sleep(ANIMATION_SPEED)
+
+def generate():
+    """Generate bar graph from user input."""
+    global data, current_animation
+    if current_animation:
+        return
+        
+    try:
+        # Parse user input into a list of integers
+        input_str = inputEntry.get().strip()
+        if not input_str:
+            raise ValueError("Empty input")
+            
+        data = list(map(int, input_str.split(',')))
+        if len(data) > 20:
+            steps_text.set("For better visualization, please enter 20 numbers or fewer.")
+            return
+            
+        drawData(data, [LIGHT_BLUE for _ in range(len(data))])
+        log_step(f"Generated new dataset with {len(data)} elements: {data}")
+    except ValueError:
+        canvas.delete("all")
+        canvas.create_text(300, 190, text="Invalid Input!\nEnter integers separated by commas.", 
+                         fill=RED, font=("Helvetica", 14))
+        steps_text.set("Error: Please enter valid integers separated by commas (e.g., '5,3,7,2').")
+
+def reset():
+    """Reset the visualization."""
+    global data, current_animation
+    if current_animation:
+        return
+        
+    data = []
+    canvas.delete("all")
+    steps_text.set("Visualization reset.\nEnter new numbers and select an algorithm.")
+    inputEntry.delete(0, END)
+
+# Main UI Frame
+UI_frame = Frame(root, width=800, height=200, bg=DARK_BLUE)
+UI_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
+
+# Canvas for visualization
+canvas = Canvas(root, width=800, height=400, bg=DARK_BLUE, highlightthickness=0)
+canvas.grid(row=1, column=0, padx=10, pady=5, sticky="nsew")
+
+# Steps panel
+steps_frame = Frame(root, width=800, height=150, bg=DARK_BLUE)
+steps_frame.grid(row=2, column=0, padx=10, pady=5, sticky="nsew")
+
+steps_label = Label(steps_frame, text="Sorting Steps:", anchor=W, bg=DARK_BLUE, 
+                   fg=WHITE, font=LABEL_FONT)
+steps_label.pack(side=TOP, anchor=W, padx=5, pady=2)
+
+steps_panel = Text(steps_frame, height=8, wrap=WORD, bg='#34495e', fg=WHITE, 
+                  insertbackground=WHITE, font=STEP_FONT)
+scrollbar = Scrollbar(steps_frame, command=steps_panel.yview)
+steps_panel.config(yscrollcommand=scrollbar.set)
+steps_panel.pack(side=LEFT, fill=BOTH, expand=True)
+scrollbar.pack(side=RIGHT, fill=Y)
+
+def update_steps(*args):
+    steps_panel.config(state=NORMAL)
+    steps_panel.delete(1.0, END)
+    steps_panel.insert(END, steps_text.get())
+    steps_panel.config(state=DISABLED)
+    steps_panel.yview_moveto(1)
+
+steps_text = StringVar()
+steps_text.set("Welcome to SeanScript Sorting Visualizer!\n\n" +
+              "Enter comma-separated numbers and select an algorithm to visualize.\n")
+steps_text.trace_add("write", update_steps)
+
+# Input section
+input_frame = Frame(UI_frame, bg=DARK_BLUE)
+input_frame.grid(row=0, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+
+Label(input_frame, text="Enter Numbers (comma separated):", bg=DARK_BLUE, 
+     fg=WHITE, font=LABEL_FONT).grid(row=0, column=0, padx=5, sticky="w")
+
+inputEntry = Entry(input_frame, width=40, bg='#34495e', fg=WHITE, 
+                 insertbackground=WHITE, relief=FLAT)
+inputEntry.grid(row=0, column=1, padx=5, sticky="ew")
+
+Button(input_frame, text="Generate", command=generate, bg=GREEN, fg=WHITE, 
+      font=BUTTON_FONT, relief=FLAT).grid(row=0, column=2, padx=5)
+
+Button(input_frame, text="Reset", command=reset, bg=RED, fg=WHITE, 
+      font=BUTTON_FONT, relief=FLAT).grid(row=0, column=3, padx=5)
+
+# Algorithm buttons
+algo_frame = Frame(UI_frame, bg=DARK_BLUE)
+algo_frame.grid(row=1, column=0, columnspan=3, padx=5, pady=10, sticky="ew")
+
+Label(algo_frame, text="Sorting Algorithms:", bg=DARK_BLUE, 
+     fg=WHITE, font=LABEL_FONT).grid(row=0, column=0, columnspan=5, sticky="w", padx=5)
+
+Button(algo_frame, text="Bubble Sort", command=bubbleSort, bg=PURPLE, fg=WHITE, 
+      font=BUTTON_FONT, relief=FLAT).grid(row=1, column=0, padx=2, pady=2, sticky="ew")
+
+Button(algo_frame, text="Selection Sort", command=selectionSort, bg=PURPLE, fg=WHITE, 
+      font=BUTTON_FONT, relief=FLAT).grid(row=1, column=1, padx=2, pady=2, sticky="ew")
+
+Button(algo_frame, text="Insertion Sort", command=insertionSort, bg=PURPLE, fg=WHITE, 
+      font=BUTTON_FONT, relief=FLAT).grid(row=1, column=2, padx=2, pady=2, sticky="ew")
+
+Button(algo_frame, text="Shell Sort", command=shellSort, bg=PURPLE, fg=WHITE, 
+      font=BUTTON_FONT, relief=FLAT).grid(row=1, column=3, padx=2, pady=2, sticky="ew")
+
+Button(algo_frame, text="Merge Sort", command=mergeSort, bg=PURPLE, fg=WHITE, 
+      font=BUTTON_FONT, relief=FLAT).grid(row=1, column=4, padx=2, pady=2, sticky="ew")
+
+# Configure grid weights
+root.grid_rowconfigure(1, weight=1)
+root.grid_columnconfigure(0, weight=1)
+
+UI_frame.grid_columnconfigure(0, weight=1)
+input_frame.grid_columnconfigure(1, weight=1)
+algo_frame.grid_columnconfigure((0,1,2,3,4), weight=1, uniform="algo")
+
+root.mainloop()
