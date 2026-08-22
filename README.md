@@ -106,7 +106,7 @@ Swap 10 ↔ 6
 Sorting completed successfully.
 🛠️ Technologies
 
-AlgoSolver is built using:
+## AlgoSolver is built using:
 
 Python
 PySide6
@@ -117,7 +117,7 @@ GUI-based visualization
 
 The original prototype was developed using Tkinter, with the interface later being redesigned around PySide6 for a more modern desktop experience.
 
-📦 Installation
+## 📦 Installation
 1. Clone the repository
 git clone https://github.com/Seanscript-dev/Algorithm-solver.git
 2. Enter the project directory
@@ -178,7 +178,7 @@ Steps
 
 This can help demonstrate the practical differences between sorting algorithms.
 
-🎓 Educational Purpose
+## 🎓 Educational Purpose
 
 AlgoSolver is primarily designed as an educational tool.
 
@@ -202,7 +202,7 @@ For example, Bubble Sort repeatedly compares neighboring elements:
 
 This makes concepts such as comparisons, swaps, iterations, and algorithm complexity easier to understand.
 
-📊 Why Visualization?
+## 📊 Why Visualization?
 
 Sorting algorithms can be difficult to understand when presented only as source code.
 
@@ -216,7 +216,7 @@ How different algorithms behave
 
 This makes AlgoSolver useful for students, beginners, and anyone learning fundamental algorithms.
 
-🏗️ Project Structure
+### 🏗️ Project Structure
 
 A typical project structure may look like:
 
@@ -273,15 +273,15 @@ MIT License
 
 If the repository does not currently have a license, choose one before publishing this section.
 
-👨‍💻 Author
+### 👨‍💻 Author
 
 Created by Seanscript-dev
 
-GitHub:
+## GitHub:
 
 https://github.com/Seanscript-dev
 
-⭐ Support
+###⭐ Support
 
 If you find AlgoSolver useful for learning algorithms, consider giving the repository a ⭐ on GitHub.
 algorithms.py: A module containing the Python implementations of the various sorting algorithms.
