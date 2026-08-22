@@ -1,4 +1,6 @@
 # 🎯 Project Overview
+<img width="1919" height="987" alt="image" src="https://github.com/user-attachments/assets/98fa031e-c205-4515-b657-153fe61da698" />
+
 The tool provides a graphical user interface (GUI) where you can generate an array of values, choose from classic sorting algorithms, and watch an animated step-by-step visualization of the sorting process using bar graphs.
 
 Here's a quick look at its core features:
